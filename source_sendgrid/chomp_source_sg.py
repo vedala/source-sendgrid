@@ -3,15 +3,28 @@ import csv
 import urllib.request
 import json
 
+ITEMS_PER_PAGE = 20
+
 class SourceSendgrid(object):
-    def __init__(self):
-        pass
+    def __init__(self, credentials, source_config):
+        self.credentials = credentials
+        self.source_config = source_config
+        self.validate_config()
+        url_str = construct_url()
+        self.items_per_page = ITEMS_PER_PAGE
 
     def get_batch(self):
         pass
 
     def cleanup(self):
         pass
+
+    def construct_url(self):
+        start_date = self.source_config['start_date']
+        end_date = self.source_config['end_date']
+        sg_url = f"https://api.sendgrid.com/v3/stats?start_date={start_date}"
+        sg_url = sg_url + f"&end_date={end_date}"
+        return sg_url
 
     def fetch_and_write_data(extract_name, api_key, fields, start_date,
                                                 end_date, extract_location):
