@@ -2,6 +2,7 @@ import os
 import csv
 import urllib.request
 import json
+from datetime import datetime
 
 ITEMS_PER_PAGE = 20
 
@@ -13,6 +14,14 @@ class SourceSendgrid(object):
         url_str = construct_url()
         self.items_per_page = ITEMS_PER_PAGE
 
+    def validate_date_format(self, date_str):
+        try:
+            datetime.strptime(date_str, '%Y-%m-%d')
+        except ValueError:
+            return False
+
+        return True
+
     def validate_config(self):
         if 'top-level-api' not in self.source_config:
             raise Exception("Key 'top-level-api' is missing")
@@ -20,9 +29,12 @@ class SourceSendgrid(object):
             raise Exception("Invalid value for key 'top-level-api'")
         elif 'start-date' not in self.source_config:
             raise Exception("Key 'start-date' is missing")
+        elif not self.validate_date_format(self.source_config['start-date']):
+            raise Exception("Invalid date for 'start-date'")
         elif 'end-date' not in self.source_config:
             raise Exception("Key 'end-date' is missing")
-
+        elif not self.validate_date_format(self.source_config['end-date']):
+            raise Exception("Invalid date for 'end-date'")
 
     def construct_url(self):
         start_date = self.source_config['start_date']

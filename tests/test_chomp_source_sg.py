@@ -44,10 +44,24 @@ class SendgridTestCase(unittest.TestCase):
         source.source_config = {'top-level-api': 'stats', 'start-date': 'abcd'}
         with self.assertRaises(Exception) as ctx:
             source.validate_config()
+        self.assertEqual("Invalid date for 'start-date'", str(ctx.exception))
+
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2016-07-30'}
+        with self.assertRaises(Exception) as ctx:
+            source.validate_config()
         self.assertEqual("Key 'end-date' is missing", str(ctx.exception))
 
-        source.source_config = {'top-level-api': 'stats', 'start-date': 'abcd',
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2016-07-30',
                                 'end-date': 'efgh'}
+        with self.assertRaises(Exception) as ctx:
+            source.validate_config()
+        self.assertEqual("Invalid date for 'end-date'", str(ctx.exception))
+
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2016-07-30',
+                                'end-date': '2018-08-10'}
         self.assertEqual(None, source.validate_config())
 
 if __name__ == "__main__":
