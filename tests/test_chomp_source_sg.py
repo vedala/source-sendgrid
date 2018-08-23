@@ -1,7 +1,18 @@
 import unittest
 import json
+import sys
 from unittest.mock import patch
 from source_sendgrid import SourceSendgrid
+
+def get_file_contents(filename):
+    try:
+        with open(filename) as f:
+            contents = f.read()
+    except FileNotFoundError:
+        print(f'Error, file "{filename}" does not exist.', file=sys.stderr)
+        raise
+
+    return contents
 
 class SendgridTestCase(unittest.TestCase):
     """Tests for extracting from sendgrid."""
@@ -181,6 +192,61 @@ class SendgridTestCase(unittest.TestCase):
                           ("2016-08-01", 100, 95, 91)
                         ]
         self.assertEqual(expected_list, source.prepare_batch_rows(json_list))
+
+
+    def test_prepare_batch_rows(self):
+
+        credentials = json.loads(get_file_contents('test_credentials.json'))
+        source_config = {'top-level-api': 'stats',
+                         'start-date': '2018-07-21',
+                         'end-date': '2018-08-20',
+                         'fields' :
+                                  ['requests', 'delivered', 'unique_opens']
+                         }
+
+        source = SourceSendgrid(credentials, source_config)
+
+        expected_batch_1 = [
+            ('2018-07-21', 0, 0, 0),
+            ('2018-07-22', 0, 0, 0),
+            ('2018-07-23', 0, 0, 0),
+            ('2018-07-24', 0, 0, 0),
+            ('2018-07-25', 0, 0, 0),
+            ('2018-07-26', 0, 0, 0),
+            ('2018-07-27', 0, 0, 0),
+            ('2018-07-28', 0, 0, 0),
+            ('2018-07-29', 0, 0, 0),
+            ('2018-07-30', 3, 1, 1),
+            ('2018-07-31', 0, 0, 0),
+            ('2018-08-01', 0, 0, 0),
+            ('2018-08-02', 0, 0, 0),
+            ('2018-08-03', 0, 0, 0),
+            ('2018-08-04', 0, 0, 0),
+            ('2018-08-05', 0, 0, 0),
+            ('2018-08-06', 0, 0, 0),
+            ('2018-08-07', 0, 0, 0),
+            ('2018-08-08', 0, 0, 0),
+            ('2018-08-09', 0, 0, 0)
+        ]
+        self.assertEqual(expected_batch_1, source.get_batch())
+
+        expected_batch_2 = [
+            ('2018-08-10', 0, 0, 0),
+            ('2018-08-11', 0, 0, 0),
+            ('2018-08-12', 0, 0, 0),
+            ('2018-08-13', 0, 0, 0),
+            ('2018-08-14', 0, 0, 0),
+            ('2018-08-15', 0, 0, 0),
+            ('2018-08-16', 0, 0, 0),
+            ('2018-08-17', 15, 15, 11),
+            ('2018-08-18', 0, 0, 0),
+            ('2018-08-19', 0, 0, 4),
+            ('2018-08-20', 0, 0, 0)
+        ]
+        self.assertEqual(expected_batch_2, source.get_batch())
+
+        expected_batch_3 = []
+        self.assertEqual(expected_batch_3, source.get_batch())
 
 if __name__ == "__main__":
     unittest.main()

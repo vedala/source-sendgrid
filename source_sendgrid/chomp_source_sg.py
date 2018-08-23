@@ -14,7 +14,7 @@ class SourceSendgrid(object):
         self.source_config = source_config
         self.validate_config()
         self.batches_fetched = 0
-        self.batches_to_fetch = calculate_num_batches()
+        self.batches_to_fetch = self.calculate_num_batches()
 
     def calculate_num_batches(self):
         start_d = date.fromisoformat(self.source_config['start-date'])
@@ -51,8 +51,9 @@ class SourceSendgrid(object):
         sg_url += f"&end_date={end_date_str}"
         return sg_url
 
-    def build_request(self):
+    def build_request(self, sg_url):
         sg_request = urllib.request.Request(sg_url)
+        api_key = self.credentials['api-key']
         sg_request.add_header('Authorization', f"Bearer {api_key}")
         return sg_request
 
@@ -93,13 +94,13 @@ class SourceSendgrid(object):
         if self.batches_fetched == self.batches_to_fetch:
             return []
         else:
-            date_range_start, date_range_end = calculate_date_range()
+            date_range_start, date_range_end = self.calculate_date_range()
 
         # construct_url
-        sg_url = construct_url(date_range_start, date_range_end)
+        sg_url = self.construct_url(date_range_start, date_range_end)
 
         # build request
-        sg_request = build_request(sg_url)
+        sg_request = self.build_request(sg_url)
 
         # execute request
         sg_response = urllib.request.urlopen(sg_request).read()
@@ -107,7 +108,7 @@ class SourceSendgrid(object):
         response_json = json.loads(response_decoded)
 
         # convert json array to list of tuples
-        response_list = prepare_batch_rows(response_json)
+        response_list = self.prepare_batch_rows(response_json)
 
         self.batches_fetched += 1
         return response_list
