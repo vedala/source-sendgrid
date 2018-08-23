@@ -2,17 +2,26 @@ import os
 import csv
 import urllib.request
 import json
+import math
 from datetime import datetime
 
 ITEMS_PER_PAGE = 20
+SG_URL_BASE = "https://api.sendgrid.com/v3/stats"
 
 class SourceSendgrid(object):
     def __init__(self, credentials, source_config):
         self.credentials = credentials
         self.source_config = source_config
         self.validate_config()
-        url_str = construct_url()
-        self.items_per_page = ITEMS_PER_PAGE
+        self.batches_fetched = 0
+        self.batches_to_fetch = calculate_num_batches()
+
+    def calculate_num_batches(self):
+        start_d = date.fromisoformat(self.source_config['start-date'])
+        end_d   = date.fromisoformat(self.source_config['end-date'])
+        date_delta = end_d - start_d
+        num_days = date_delta.days + 1
+        return math.ceil(num_days / ITEMS_PER_PAGE)
 
     def validate_date_format(self, date_str):
         try:
@@ -36,26 +45,53 @@ class SourceSendgrid(object):
         elif not self.validate_date_format(self.source_config['end-date']):
             raise Exception("Invalid date for 'end-date'")
 
-    def construct_url(self):
-        start_date = self.source_config['start_date']
-        end_date = self.source_config['end_date']
-        sg_url = f"https://api.sendgrid.com/v3/stats?start_date={start_date}"
-        sg_url = sg_url + f"&end_date={end_date}"
+    def construct_url(self, start_date_str, end_date_str):
+        sg_url = SG_URL_BASE
+        sg_url += f"?start_date={start_date_str}"
+        sg_url += f"&end_date={end_date_str}"
         return sg_url
 
     def build_request(self):
-        sg_request =urllib.request.Request(sg_url)
+        sg_request = urllib.request.Request(sg_url)
         sg_request.add_header('Authorization', f"Bearer {api_key}")
+        return sg_request
+
+    def calculate_date_range(self):
+        # start_date from source_config
+        # use batches_fetched to calculate start of next batch
+        # use deltadays
+        # calculate end of batch using start of batch and ITEMS_PER_PAGE
+        return (start_date_str, end_date_str)
+
+    def json_objects_list_to_tuple_list(self, json_list):
+        # need to extract fields of interest
+        list_of_tuples = []
+        for obj in json_list:
+            list_of_tuples.append(obj.items())
+        return list_of_tuples
 
     def get_batch(self):
-        sg_request.add_header('Authorization', f"Bearer {api_key}")
+        if self.batches_fetched == self.batches_to_fetch:
+            return []
+        else:
+            date_range_start, date_range_end = calculate_date_range()
+
+        # construct_url
+        sg_url = construct_url(date_range_start, date_range_end)
+
+        # build request
+        sg_request = build_request(sg_url)
+
+        # execute request
         sg_response = urllib.request.urlopen(sg_request).read()
-        sg_response_decoded = sg_response.decode('utf-8').replace("'", '"')
-        sg_response_json = json.loads(sg_response_decoded)
-        for row in sg_response_json:
-            # append to list instead of writing to file
-            # write_row_to_file(extract_file, csv_writer, row, fields)
-            pass
+        response_decoded = sg_response.decode('utf-8').replace("'", '"')
+        response_json = json.loads(response_decoded)
+
+        # convert json array to list of tuples
+        response_list = json_objects_list_to_tuple_list(response_json)
+
+        # return the batch
+        return response_list
 
     def cleanup(self):
         pass

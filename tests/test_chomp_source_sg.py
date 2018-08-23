@@ -12,12 +12,13 @@ class SendgridTestCase(unittest.TestCase):
         mock_init.return_value = None
 
         source = SourceSendgrid()
-        source.source_config = { 'start_date': '2018-07-29',
-                                'end_date': '2018-07-30' }
+        start_date = '2018-07-29'
+        end_date = '2018-07-30'
 
-        expected_url = f"https://api.sendgrid.com/v3/stats?start_date=2018-07-29"
-        expected_url += f"&end_date=2018-07-30"
-        self.assertEqual(expected_url, source.construct_url())
+        expected_url = "https://api.sendgrid.com/v3/stats"
+        expected_url += "?start_date=2018-07-29&end_date=2018-07-30"
+        self.assertEqual(expected_url,
+                            source.construct_url(start_date, end_date))
 
 
     @patch.object(SourceSendgrid, '__init__')
