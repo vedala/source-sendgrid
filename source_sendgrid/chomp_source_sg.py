@@ -18,6 +18,10 @@ class SourceSendgrid(object):
             raise Exception("Key 'top-level-api' is missing")
         elif self.source_config['top-level-api'] not in ['stats']:
             raise Exception("Invalid value for key 'top-level-api'")
+        elif 'start-date' not in self.source_config:
+            raise Exception("Key 'start-date' is missing")
+        elif 'end-date' not in self.source_config:
+            raise Exception("Key 'end-date' is missing")
 
 
     def construct_url(self):

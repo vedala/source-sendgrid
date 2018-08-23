@@ -37,6 +37,17 @@ class SendgridTestCase(unittest.TestCase):
         self.assertEqual("Invalid value for key 'top-level-api'", str(ctx.exception))
 
         source.source_config = {'top-level-api': 'stats'}
+        with self.assertRaises(Exception) as ctx:
+            source.validate_config()
+        self.assertEqual("Key 'start-date' is missing", str(ctx.exception))
+
+        source.source_config = {'top-level-api': 'stats', 'start-date': 'abcd'}
+        with self.assertRaises(Exception) as ctx:
+            source.validate_config()
+        self.assertEqual("Key 'end-date' is missing", str(ctx.exception))
+
+        source.source_config = {'top-level-api': 'stats', 'start-date': 'abcd',
+                                'end-date': 'efgh'}
         self.assertEqual(None, source.validate_config())
 
 if __name__ == "__main__":
