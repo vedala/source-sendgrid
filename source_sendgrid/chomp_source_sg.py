@@ -75,11 +75,18 @@ class SourceSendgrid(object):
 
         return (start_date_str, end_date_str)
 
-    def json_objects_list_to_tuple_list(self, json_list):
-        # need to extract fields of interest
+    def prepare_batch_rows(self, json_list):
         list_of_tuples = []
-        for obj in json_list:
-            list_of_tuples.append(obj.items())
+        for row in json_list:
+            row_list = []
+            row_list.append(row['date'])
+            metrics = row['stats'][0]['metrics']
+            for field in self.source_config['fields']:
+                row_list.append(metrics[field])
+
+            row_tuple = tuple(row_list)
+            list_of_tuples.append(row_tuple)
+
         return list_of_tuples
 
     def get_batch(self):
@@ -100,9 +107,9 @@ class SourceSendgrid(object):
         response_json = json.loads(response_decoded)
 
         # convert json array to list of tuples
-        response_list = json_objects_list_to_tuple_list(response_json)
+        response_list = prepare_batch_rows(response_json)
 
-        # return the batch
+        self.batches_fetched += 1
         return response_list
 
     def cleanup(self):
