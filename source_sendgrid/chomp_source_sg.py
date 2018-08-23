@@ -3,7 +3,7 @@ import csv
 import urllib.request
 import json
 import math
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 ITEMS_PER_PAGE = 20
 SG_URL_BASE = "https://api.sendgrid.com/v3/stats"
@@ -57,10 +57,22 @@ class SourceSendgrid(object):
         return sg_request
 
     def calculate_date_range(self):
-        # start_date from source_config
-        # use batches_fetched to calculate start of next batch
-        # use deltadays
-        # calculate end of batch using start of batch and ITEMS_PER_PAGE
+        start_date = self.source_config['start-date']
+        end_date = self.source_config['end-date']
+
+        days_to_add = self.batches_fetched * ITEMS_PER_PAGE
+        td_days = timedelta(days=days_to_add)
+
+        start_date_obj = date.fromisoformat(start_date) + td_days
+        calc_end_date_obj = start_date_obj + timedelta(days=(ITEMS_PER_PAGE - 1))
+        end_date_obj = date.fromisoformat(end_date)
+
+        if end_date_obj < calc_end_date_obj:
+            calc_end_date_obj = end_date_obj
+
+        start_date_str = start_date_obj.isoformat()
+        end_date_str   = calc_end_date_obj.isoformat()
+
         return (start_date_str, end_date_str)
 
     def json_objects_list_to_tuple_list(self, json_list):

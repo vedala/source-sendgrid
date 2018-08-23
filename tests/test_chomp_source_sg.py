@@ -65,5 +65,61 @@ class SendgridTestCase(unittest.TestCase):
                                 'end-date': '2018-08-10'}
         self.assertEqual(None, source.validate_config())
 
+    @patch.object(SourceSendgrid, '__init__')
+    def test_calculate_num_batches(self, mock_init):
+
+        mock_init.return_value = None
+        source = SourceSendgrid()
+
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2018-07-01',
+                                'end-date': '2018-07-19'}
+        self.assertEqual(1, source.calculate_num_batches())
+
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2018-07-01',
+                                'end-date': '2018-07-20'}
+        self.assertEqual(1, source.calculate_num_batches())
+
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2018-07-01',
+                                'end-date': '2018-07-21'}
+        self.assertEqual(2, source.calculate_num_batches())
+
+
+    @patch.object(SourceSendgrid, '__init__')
+    def test_calculate_date_range(self, mock_init):
+
+        mock_init.return_value = None
+        source = SourceSendgrid()
+
+        source.batches_fetched = 0
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2018-07-01',
+                                'end-date': '2018-08-15'}
+        self.assertEqual(("2018-07-01", "2018-07-20"),
+                                        source.calculate_date_range())
+
+        source.batches_fetched = 1
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2018-07-01',
+                                'end-date': '2018-08-15'}
+        self.assertEqual(("2018-07-21", "2018-08-09"),
+                                        source.calculate_date_range())
+
+        source.batches_fetched = 2
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2018-07-01',
+                                'end-date': '2018-08-15'}
+        self.assertEqual(("2018-08-10", "2018-08-15"),
+                                        source.calculate_date_range())
+
+        source.batches_fetched = 0
+        source.source_config = {'top-level-api': 'stats',
+                                'start-date': '2017-03-01',
+                                'end-date': '2017-03-10'}
+        self.assertEqual(("2017-03-01", "2017-03-10"),
+                                        source.calculate_date_range())
+
 if __name__ == "__main__":
     unittest.main()
