@@ -196,7 +196,7 @@ class SendgridTestCase(unittest.TestCase):
 
     def test_prepare_batch_rows(self):
 
-        credentials = json.loads(get_file_contents('test_credentials.json'))
+        credentials = json.loads(get_file_contents('sg_credentials.json'))
         source_config = {'top-level-api': 'stats',
                          'start-date': '2018-07-21',
                          'end-date': '2018-08-20',
