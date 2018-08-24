@@ -17,8 +17,10 @@ class SourceSendgrid(object):
         self.batches_to_fetch = self.calculate_num_batches()
 
     def calculate_num_batches(self):
-        start_d = date.fromisoformat(self.source_config['start-date'])
-        end_d   = date.fromisoformat(self.source_config['end-date'])
+        start_d = datetime.strptime(
+                      self.source_config['start-date'], '%Y-%m-%d').date()
+        end_d   = datetime.strptime(
+                      self.source_config['end-date'], '%Y-%m-%d').date()
         date_delta = end_d - start_d
         num_days = date_delta.days + 1
         return math.ceil(num_days / ITEMS_PER_PAGE)
@@ -64,9 +66,9 @@ class SourceSendgrid(object):
         days_to_add = self.batches_fetched * ITEMS_PER_PAGE
         td_days = timedelta(days=days_to_add)
 
-        start_date_obj = date.fromisoformat(start_date) + td_days
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date() + td_days
         calc_end_date_obj = start_date_obj + timedelta(days=(ITEMS_PER_PAGE - 1))
-        end_date_obj = date.fromisoformat(end_date)
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
 
         if end_date_obj < calc_end_date_obj:
             calc_end_date_obj = end_date_obj
